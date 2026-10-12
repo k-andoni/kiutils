@@ -139,3 +139,19 @@ class Tests_PowerScope(unittest.TestCase):
                 self.assertEqual(restored.power_type, scope)
                 symbol.isPower = False
                 self.assertNotIn("power", symbol.to_sexpr())
+
+
+class Tests_SymbolMetadata(unittest.TestCase):
+    def test_body_styles_and_pin_jumpers_do_not_drop_library_symbols(self):
+        from kiutils.symbol import SymbolLib
+        for styles in ('(body_styles demorgan)', '(body_styles "Standard" "Alternate view")'):
+            with self.subTest(styles=styles):
+                tokens = parse_sexp('(metadata ' + styles + ' (jumper_pin_groups ("1" "2") ("3" "4")))')[1:]
+                source = ["kicad_symbol_lib", ["version", 20260101], ["generator", "eeschema"], ["symbol", "test"] + tokens]
+                lib = SymbolLib.from_sexpr(source)
+                self.assertEqual(len(lib.symbols), 1)
+                output = parse_sexp(lib.symbols[0].to_sexpr())
+                self.assertEqual([x for x in output[2:] if isinstance(x, list) and x[0] in ("body_styles", "jumper_pin_groups")], tokens)
+                restored = SymbolLib.from_sexpr(parse_sexp(lib.to_sexpr()))
+                self.assertEqual(len(restored.symbols), 1)
+                self.assertEqual(restored.symbols[0].body_styles, lib.symbols[0].body_styles)

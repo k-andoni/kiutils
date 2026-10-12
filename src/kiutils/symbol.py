@@ -403,6 +403,11 @@ class Symbol:
     power_type: Optional[str] = None
     """KiCad 10 power scope: global or local; None retains the legacy power token."""
 
+    body_styles: List[str] = field(default_factory=list)
+    """KiCad 10 De Morgan marker or custom body-style names."""
+
+    jumper_pin_groups: List[List[str]] = field(default_factory=list)
+
     @classmethod
     def from_sexpr(cls, exp: list) -> Symbol:
         """Convert the given S-Expression into a Symbol object
@@ -436,6 +441,10 @@ class Symbol:
                 raise ValueError(
                     f"Expected list property [key, value], got: {item}. Full expression: {exp}"
                 )
+            elif item[0] == "body_styles":
+                object.body_styles.extend(item[1:])
+            elif item[0] == "jumper_pin_groups":
+                object.jumper_pin_groups.extend(item[1:])
             elif item[0] == "extends":
                 object.extends = item[1]
             elif item[0] == "exclude_from_sim":
@@ -576,6 +585,10 @@ class Symbol:
         if self.isPower:
             expr.append(["power", self.power_type] if self.power_type is not None else ["power"])
 
+        if self.body_styles:
+            styles = self.body_styles if self.body_styles == ["demorgan"] else [escape_and_quote(s) for s in self.body_styles]
+            expr.append(["body_styles"] + styles)
+
         if self.hidePinNumbers:
             expr.append(["pin_numbers", ["hide", "yes"]])
 
@@ -612,6 +625,9 @@ class Symbol:
                     yesno=True,
                 )
             )
+
+        if self.jumper_pin_groups:
+            expr.append(["jumper_pin_groups"] + [[escape_and_quote(pin) for pin in group] for group in self.jumper_pin_groups])
 
         for item in self.properties:
             expr.append(item._to_sexpr_raw())
