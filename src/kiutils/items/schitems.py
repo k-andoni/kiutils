@@ -538,6 +538,45 @@ class PolyLine:
 
 
 @dataclass
+class RuleArea(PolyLine):
+    """A schematic rule-area outline with optional component inclusion flags.
+
+    Inherits the PolyLine geometry API used by KiCad 9 callers.
+    """
+
+    exclude_from_sim: Optional[bool] = None
+    in_bom: Optional[bool] = None
+    on_board: Optional[bool] = None
+    dnp: Optional[bool] = None
+
+    @classmethod
+    def from_sexpr(cls, exp: list) -> RuleArea:
+        if not isinstance(exp, list) or not exp or exp[0] != "rule_area":
+            raise ValueError("Expected a rule_area expression")
+        outlines = [item for item in exp[1:] if isinstance(item, list) and item[0] == "polyline"]
+        if len(outlines) != 1:
+            raise ValueError("Rule area requires one polyline outline")
+        object = super().from_sexpr(outlines[0])
+        for item in exp[1:]:
+            if not isinstance(item, list) or not item:
+                raise ValueError(f"Invalid rule area property: {item}")
+            if item[0] in ("exclude_from_sim", "in_bom", "on_board", "dnp"):
+                setattr(object, item[0], parse_bool(item, item[0]))
+            elif item[0] != "polyline":
+                raise ValueError(f"Unrecognized rule area property: {item[0]}")
+        return object
+
+    def _to_sexpr_raw(self):
+        expr = ["rule_area"]
+        for key in ("exclude_from_sim", "in_bom", "on_board", "dnp"):
+            value = getattr(self, key)
+            if value is not None:
+                expr.append(format_bool(key, value, compact=False, yesno=True))
+        expr.append(super()._to_sexpr_raw())
+        return expr
+
+
+@dataclass
 class Text:
     """The ``text`` token defines graphical text in a schematic
 

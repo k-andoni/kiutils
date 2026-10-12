@@ -127,7 +127,7 @@ class Schematic:
     tables: list[Table] = field(default_factory=list)
     """The ``tables`` token defines a list of tables used in the schematic"""
 
-    rule_areas: list[PolyLine] = field(default_factory=list)
+    rule_areas: list[Union[PolyLine, RuleArea]] = field(default_factory=list)
     """The ``rule_areas`` token defines rule areas used in the schematic"""
 
     embedded_files: list[EmbeddedFile] = field(default_factory=list)
@@ -225,7 +225,7 @@ class Schematic:
             elif item[0] == "table":
                 object.tables.append(Table().from_sexpr(item))
             elif item[0] == "rule_area":
-                object.rule_areas.append(PolyLine().from_sexpr(item[1]))
+                object.rule_areas.append(RuleArea.from_sexpr(item))
             elif item[0] == "embedded_files":
                 object.embedded_files.extend(
                     [EmbeddedFile.from_sexpr(f) for f in item[1:]]
@@ -366,7 +366,10 @@ class Schematic:
 
         if len(self.rule_areas) > 0:
             for ra in self.rule_areas:
-                expr.append(["rule_area", ra._to_sexpr_raw()])
+                if isinstance(ra, RuleArea):
+                    expr.append(ra._to_sexpr_raw())
+                else:
+                    expr.append(["rule_area", ra._to_sexpr_raw()])
 
         if self.netclassFlags:
             expr.extend(item._to_sexpr_raw() for item in self.netclassFlags)
