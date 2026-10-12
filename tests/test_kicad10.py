@@ -123,3 +123,19 @@ class Tests_PcbMetadata(unittest.TestCase):
         self.assertNotIn("units", text)
         self.assertNotIn("duplicate_pad_numbers_are_jumpers", text)
         self.assertNotIn("jumper_pad_groups", text)
+
+
+class Tests_PowerScope(unittest.TestCase):
+    def test_scoped_and_legacy_power_symbols(self):
+        from kiutils.symbol import Symbol
+        for token, scope in (("(power)", None), ("(power global)", "global"), ("(power local)", "local")):
+            with self.subTest(token=token):
+                symbol = Symbol.from_sexpr(parse_sexp('(symbol "PWR" ' + token + ')'))
+                self.assertTrue(symbol.isPower)
+                self.assertEqual(symbol.power_type, scope)
+                self.assertIn(parse_sexp(token), parse_sexp(symbol.to_sexpr()))
+                restored = Symbol.from_sexpr(parse_sexp(symbol.to_sexpr()))
+                self.assertTrue(restored.isPower)
+                self.assertEqual(restored.power_type, scope)
+                symbol.isPower = False
+                self.assertNotIn("power", symbol.to_sexpr())

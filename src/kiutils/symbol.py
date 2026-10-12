@@ -400,6 +400,9 @@ class Symbol:
     embedded_files: list[EmbeddedFile] = field(default_factory=list)
     """The ``embedded_files`` section is a list of embedded files that symbol is referenced from."""
 
+    power_type: Optional[str] = None
+    """KiCad 10 power scope: global or local; None retains the legacy power token."""
+
     @classmethod
     def from_sexpr(cls, exp: list) -> Symbol:
         """Convert the given S-Expression into a Symbol object
@@ -424,7 +427,11 @@ class Symbol:
         object.libId = exp[1]
         for item in exp[2:]:
             if is_bool_key(item, "power"):
-                object.isPower = parse_bool(item, "power")
+                if isinstance(item, list) and len(item) == 2 and item[1] in ("global", "local"):
+                    object.isPower = True
+                    object.power_type = item[1]
+                else:
+                    object.isPower = parse_bool(item, "power")
             elif not isinstance(item, list):
                 raise ValueError(
                     f"Expected list property [key, value], got: {item}. Full expression: {exp}"
@@ -567,7 +574,7 @@ class Symbol:
             expr.append(["extends", escape_and_quote(self.extends)])
 
         if self.isPower:
-            expr.append(["power"])
+            expr.append(["power", self.power_type] if self.power_type is not None else ["power"])
 
         if self.hidePinNumbers:
             expr.append(["pin_numbers", ["hide", "yes"]])
