@@ -16,7 +16,7 @@ Documentation taken from:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from kiutils.items.common import Position
 from kiutils.items.gritems import *
@@ -1170,7 +1170,7 @@ class Segment:
     locked: bool = False
     """The ``locked`` token defines if the line cannot be edited"""
 
-    net: int = 0
+    net: Union[int, str] = 0
     """The ``net`` token defines by the net ordinal number which net in the net
     section that the segment is part of"""
 
@@ -1253,7 +1253,7 @@ class Segment:
         expr.extend(
             [
                 ["layer", escape_and_quote(self.layer)],
-                ["net", self.net],
+                ["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net],
                 ["uuid", quote(self.tstamp)],
             ]
         )
@@ -1298,7 +1298,7 @@ class Via:
     free: bool = False
     """The ``free`` token indicates that the via is free to be moved outside it's assigned net"""
 
-    net: int = 0
+    net: Union[int, str] = 0
     """The ``net`` token defines by net ordinal number which net in the net section that
     the via is part of"""
 
@@ -1470,7 +1470,7 @@ class Via:
         if self.zone_layer_connections:
             expr.append(["zone_layer_connections"])
 
-        expr.append(["net", self.net])
+        expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
@@ -1505,7 +1505,7 @@ class Arc:
     locked: bool = False
     """The ``locked`` token defines if the arc cannot be edited. Defaults to False."""
 
-    net: int = 0
+    net: Union[int, str] = 0
     """The ``net`` token defines the net ordinal number which net in the net section that arc is part
     of. Defaults to 0."""
 
@@ -1595,7 +1595,7 @@ class Arc:
                 [
                     ["width", self.width],
                     ["layer", escape_and_quote(self.layer)],
-                    ["net", self.net],
+                    ["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net],
                 ]
             )
 

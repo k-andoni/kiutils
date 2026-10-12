@@ -715,8 +715,8 @@ class Effects:
 class Net:
     """The ``net`` token defines the number and name of a net"""
 
-    number: int = 0
-    """The ``number`` token defines the integer number of the net"""
+    number: Optional[int] = 0
+    """The net ordinal, or None for KiCad 10 name-only net references."""
 
     name: str = ""
     """The ``name`` token defines the name of the net"""
@@ -742,8 +742,12 @@ class Net:
             raise Exception("Expression does not have the correct type")
 
         object = cls()
-        object.number = exp[1]
-        object.name = exp[2]
+        if len(exp) == 2:
+            object.number = None
+            object.name = exp[1]
+        else:
+            object.number = exp[1]
+            object.name = exp[2]
 
         return object
 
@@ -761,6 +765,8 @@ class Net:
         return sexp_to_string(raw_expr)
 
     def _to_sexpr_raw(self):
+        if self.number is None:
+            return ["net", escape_and_quote(self.name)]
         return ["net", self.number, escape_and_quote(self.name)]
 
 

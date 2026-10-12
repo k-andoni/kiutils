@@ -71,7 +71,7 @@ class GrText:
     
     Available since KiCad v7"""
 
-    net: Optional[int] = None
+    net: Optional[Union[int, str]] = None
     """The optional ``net`` token defines by net ordinal number which net in the net section that
     the graphical item is part of."""
 
@@ -159,7 +159,7 @@ class GrText:
             expr.append(layer)
 
         if self.net is not None:
-            expr.append(["net", self.net])
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
@@ -438,7 +438,7 @@ class GrLine:
     locked: bool = False
     """The ``locked`` token defines if the object may be moved or not"""
 
-    net: Optional[int] = None
+    net: Optional[Union[int, str]] = None
     """The optional ``net`` token defines by net ordinal number which net in the net section that
     the graphical item is part of."""
 
@@ -531,7 +531,7 @@ class GrLine:
             expr.append(["layer", escape_and_quote(self.layer)])
 
         if self.net is not None:
-            expr.append(["net", self.net])
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
@@ -570,7 +570,7 @@ class GrRect:
     locked: bool = False
     """The ``locked`` token defines if the object may be moved or not"""
 
-    net: Optional[int] = None
+    net: Optional[Union[int, str]] = None
     """The optional ``net`` token defines by net ordinal number which net in the net section that
     the graphical item is part of."""
 
@@ -666,7 +666,7 @@ class GrRect:
             expr.append(["layer", escape_and_quote(self.layer)])
 
         if self.net is not None:
-            expr.append(["net", self.net])
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
@@ -705,7 +705,7 @@ class GrCircle:
     locked: bool = False
     """The ``locked`` token defines if the object may be moved or not"""
 
-    net: Optional[int] = None
+    net: Optional[Union[int, str]] = None
     """The optional ``net`` token defines by net ordinal number which net in the net section that
     the graphical item is part of."""
 
@@ -801,7 +801,7 @@ class GrCircle:
             expr.append(["layer", escape_and_quote(self.layer)])
 
         if self.net is not None:
-            expr.append(["net", self.net])
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
@@ -840,7 +840,7 @@ class GrArc:
     locked: bool = False
     """The ``locked`` token defines if the object may be moved or not"""
 
-    net: Optional[int] = None
+    net: Optional[Union[int, str]] = None
     """The optional ``net`` token defines by net ordinal number which net in the net section that
     the graphical item is part of."""
 
@@ -934,7 +934,7 @@ class GrArc:
             expr.append(["layer", escape_and_quote(self.layer)])
 
         if self.net is not None:
-            expr.append(["net", self.net])
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
@@ -970,7 +970,7 @@ class GrPoly:
     locked: bool = False
     """The ``locked`` token defines if the object may be moved or not"""
 
-    net: Optional[int] = None
+    net: Optional[Union[int, str]] = None
     """The optional ``net`` token defines by net ordinal number which net in the net section that
     the graphical item is part of."""
 
@@ -1072,7 +1072,7 @@ class GrPoly:
             expr.append(["layer", escape_and_quote(self.layer)])
 
         if self.net is not None:
-            expr.append(["net", self.net])
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
@@ -1105,7 +1105,7 @@ class GrCurve:
     locked: bool = False
     """The ``locked`` token defines if the object may be moved or not"""
 
-    net: Optional[int] = None
+    net: Optional[Union[int, str]] = None
     """The optional ``net`` token defines by net ordinal number which net in the net section that
     the graphical item is part of."""
 
@@ -1200,7 +1200,7 @@ class GrCurve:
             expr.append(["layer", escape_and_quote(self.layer)])
 
         if self.net is not None:
-            expr.append(["net", self.net])
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])

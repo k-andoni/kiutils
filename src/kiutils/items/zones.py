@@ -17,7 +17,7 @@ Documentation taken from:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from enum import IntEnum
 
@@ -607,11 +607,11 @@ class Zone:
     """The ``locked`` token defines if the zone may be edited or not (Missing in KiCad
     docu as of 11.02.2022)"""
 
-    net: int = 0
+    net: Optional[Union[int, str]] = 0
     """The ``net`` token attribute defines by the net ordinal number which net in the nets
     section that the zone is part of"""
 
-    netName: str = "unknown"
+    netName: Optional[str] = "unknown"
     """The ``net_name`` token attribute defines the name of the net if the zone is not a keep
     out area. The net name attribute will be an empty string if the zone is a keep out area."""
 
@@ -694,6 +694,8 @@ class Zone:
             raise Exception("Expression does not have the correct type")
 
         object = cls()
+        object.net = None
+        object.netName = None
         for item in exp[1:]:
             if is_bool_key(item, "locked"):
                 object.locked = parse_bool(item, "locked")
@@ -703,6 +705,8 @@ class Zone:
                 )
             elif item[0] == "net":
                 object.net = item[1]
+                if isinstance(item[1], str):
+                    object.netName = item[1]
             elif item[0] == "net_name":
                 object.netName = item[1]
             elif item[0] == "layers" or item[0] == "layer":
@@ -779,13 +783,12 @@ class Zone:
         else:
             layer_token = "layers"
 
-        expr = [
-            "zone",
-            ["net", self.net],
-            ["net_name", escape_and_quote(self.netName)],
-            format_bool("locked", self.locked),
-            [layer_token] + layers_list,
-        ]
+        expr = ["zone"]
+        if self.net is not None:
+            expr.append(["net", escape_and_quote(self.net) if isinstance(self.net, str) else self.net])
+        if not isinstance(self.net, str) and self.netName is not None:
+            expr.append(["net_name", escape_and_quote(self.netName)])
+        expr.extend([format_bool("locked", self.locked), [layer_token] + layers_list])
 
         if self.tstamp is not None:
             expr.append(["uuid", quote(self.tstamp)])
