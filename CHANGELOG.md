@@ -1,5 +1,11 @@
 # kiutils - CHANGELOG
 
+## v1.9.11 - 12.10.2026
+### Compatibility changes
+- Added: KiCad 10 named PCB nets, footprint units/jumpers and zone defaults, while retaining numbered-net support
+- Fixed: Preserve schematic rule-area inclusion flags and global/local power-symbol scope
+- Added: Symbol body styles and pin-jumper groups
+
 ## v1.9.10 - 15.07.2026
 ### Non-breaking changes
 - Added: Support for `arc` segments in the `pts` list of `gr_poly` and `fp_poly` polygons
