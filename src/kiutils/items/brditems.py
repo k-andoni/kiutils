@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional, List, Union
 
-from kiutils.items.common import Position
+from kiutils.items.common import Position, ZoneLayerProperty
 from kiutils.items.gritems import *
 from kiutils.utils.string_utils import *
 from kiutils.utils.parsing_utils import *
@@ -1016,6 +1016,9 @@ class SetupData:
     filling: List[str] = field(default_factory=list)
     """The ``filling`` token defines which features are filled (completely filled bore)"""
 
+    zone_defaults: Optional[List[ZoneLayerProperty]] = None
+    """KiCad 10 per-layer zone defaults; None means the token was absent."""
+
     @classmethod
     def from_sexpr(cls, exp: list) -> SetupData:
         """Convert the given S-Expresstion into a SetupData object
@@ -1074,6 +1077,8 @@ class SetupData:
                 object.capping.extend(item[1:])
             elif item[0] == "filling":
                 object.filling.extend(item[1:])
+            elif item[0] == "zone_defaults":
+                object.zone_defaults = [ZoneLayerProperty.from_sexpr(p) for p in item[1:]]
             else:
                 raise ValueError(
                     f"Unrecognized property key: {item[0]}. Full expression: {item}"
@@ -1140,6 +1145,9 @@ class SetupData:
 
         if len(self.filling) > 0:
             expr.append(["filling"] + self.filling)
+
+        if self.zone_defaults is not None:
+            expr.append(["zone_defaults"] + [p._to_sexpr_raw() for p in self.zone_defaults])
 
         if self.plotSettings is not None:
             expr.append(self.plotSettings._to_sexpr_raw())

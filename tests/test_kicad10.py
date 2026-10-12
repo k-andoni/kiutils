@@ -89,3 +89,37 @@ class Tests_NamedNets(unittest.TestCase):
                         obj.coordinates = [Position(X=i, Y=i) for i in range(4)]
                     restored = cls.from_sexpr(parse_sexp(obj.to_sexpr()))
                     self.assertEqual(restored.net, value)
+
+
+class Tests_PcbMetadata(unittest.TestCase):
+    def test_footprint_units_and_jumpers_round_trip(self):
+        from kiutils.footprint import Footprint
+        tokens = parse_sexp('(metadata (units (unit (name "A") (pins "1" "2")) (unit (name "B") (pins "3" "4"))) (duplicate_pad_numbers_are_jumpers no) (jumper_pad_groups ("1" "2") ("3" "4")))')[1:]
+        footprint = Footprint.from_sexpr(["footprint", "test"] + tokens)
+        self.assertEqual(footprint.units[1].pins, ["3", "4"])
+        self.assertFalse(footprint.duplicate_pad_numbers_are_jumpers)
+        output = parse_sexp(footprint.to_sexpr())
+        keys = {x[0] for x in tokens}
+        self.assertEqual([x for x in output[2:] if isinstance(x, list) and x[0] in keys], tokens)
+        self.assertEqual(Footprint.from_sexpr(output).jumper_pad_groups, [["1", "2"], ["3", "4"]])
+
+    def test_zone_defaults_round_trip(self):
+        from kiutils.items.brditems import SetupData
+        for token in ('(zone_defaults)', '(zone_defaults (property (layer "F.Cu") (hatch_position (xy 1.25 2.5))))'):
+            with self.subTest(token=token):
+                source = parse_sexp(token)
+                setup = SetupData.from_sexpr(["setup", source])
+                output = parse_sexp(setup.to_sexpr())
+                self.assertIn(source, output)
+                self.assertEqual(SetupData.from_sexpr(output).zone_defaults, setup.zone_defaults)
+        self.assertIsNone(SetupData().zone_defaults)
+        self.assertNotIn("zone_defaults", SetupData().to_sexpr())
+
+    def test_legacy_footprint_omits_new_metadata(self):
+        from kiutils.footprint import Footprint
+        footprint = Footprint()
+        footprint.libId = "test"
+        text = footprint.to_sexpr()
+        self.assertNotIn("units", text)
+        self.assertNotIn("duplicate_pad_numbers_are_jumpers", text)
+        self.assertNotIn("jumper_pad_groups", text)

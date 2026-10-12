@@ -753,6 +753,31 @@ class Pad:
 
 
 @dataclass
+class FootprintUnit:
+    """KiCad 10 unit name and pad numbers for gate swapping."""
+
+    name: str = ""
+    pins: List[str] = field(default_factory=list)
+
+    @classmethod
+    def from_sexpr(cls, exp: list) -> FootprintUnit:
+        if not isinstance(exp, list) or not exp or exp[0] != "unit":
+            raise ValueError("Expected a footprint unit")
+        object = cls()
+        for item in exp[1:]:
+            if item[0] == "name":
+                object.name = item[1]
+            elif item[0] == "pins":
+                object.pins.extend(item[1:])
+            else:
+                raise ValueError(f"Unrecognized footprint unit property: {item[0]}")
+        return object
+
+    def _to_sexpr_raw(self):
+        return ["unit", ["name", escape_and_quote(self.name)], ["pins"] + [escape_and_quote(pin) for pin in self.pins]]
+
+
+@dataclass
 class Footprint:
     """The ``footprint`` token defines a footprint.
 
@@ -953,6 +978,12 @@ class Footprint:
     embedded_files: list[EmbeddedFile] = field(default_factory=list)
     """The ``embedded_files`` store data of embedded files"""
 
+    units: List[FootprintUnit] = field(default_factory=list)
+    """KiCad 10 gate-swapping metadata."""
+
+    duplicate_pad_numbers_are_jumpers: Optional[bool] = None
+    jumper_pad_groups: List[List[str]] = field(default_factory=list)
+
     @classmethod
     def from_sexpr(cls, exp: list) -> Footprint:
         """Convert the given S-Expresstion into a Footprint object
@@ -1050,6 +1081,12 @@ class Footprint:
                 object.pads.append(Pad.from_sexpr(item))
             elif item[0] == "zone":
                 object.zones.append(Zone.from_sexpr(item))
+            elif item[0] == "units":
+                object.units.extend(FootprintUnit.from_sexpr(unit) for unit in item[1:])
+            elif item[0] == "duplicate_pad_numbers_are_jumpers":
+                object.duplicate_pad_numbers_are_jumpers = parse_bool(item, item[0])
+            elif item[0] == "jumper_pad_groups":
+                object.jumper_pad_groups.extend(item[1:])
             elif item[0] == "sheetname":
                 object.sheet_name = item[1]
             elif item[0] == "sheetfile":
@@ -1242,6 +1279,9 @@ class Footprint:
         if self.sheet_file != "":
             expr.append(["sheetfile", escape_and_quote(self.sheet_file)])
 
+        if self.units:
+            expr.append(["units"] + [unit._to_sexpr_raw() for unit in self.units])
+
         if self.autoplaceCost90 is not None:
             expr.append(["autoplace_cost90", self.autoplaceCost90])
 
@@ -1285,6 +1325,11 @@ class Footprint:
                 escape_and_quote(item) for item in self.netTiePadGroups
             ]
             expr.append(net_tie)
+
+        if self.duplicate_pad_numbers_are_jumpers is not None:
+            expr.append(format_bool("duplicate_pad_numbers_are_jumpers", self.duplicate_pad_numbers_are_jumpers, yesno=True))
+        if self.jumper_pad_groups:
+            expr.append(["jumper_pad_groups"] + [[escape_and_quote(pin) for pin in group] for group in self.jumper_pad_groups])
 
         for item in self.graphicItems:
             expr.append(item._to_sexpr_raw())

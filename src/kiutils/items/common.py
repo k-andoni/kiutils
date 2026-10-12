@@ -771,6 +771,34 @@ class Net:
 
 
 @dataclass
+class ZoneLayerProperty:
+    """Per-layer zone hatching defaults used by KiCad 10."""
+
+    layer: str = "F.Cu"
+    hatch_position: Optional[Position] = None
+
+    @classmethod
+    def from_sexpr(cls, exp: list) -> ZoneLayerProperty:
+        if not isinstance(exp, list) or not exp or exp[0] != "property":
+            raise ValueError("Expected a zone layer property")
+        object = cls()
+        for item in exp[1:]:
+            if item[0] == "layer":
+                object.layer = item[1]
+            elif item[0] == "hatch_position":
+                object.hatch_position = Position.from_sexpr(item[1])
+            else:
+                raise ValueError(f"Unrecognized zone layer property: {item[0]}")
+        return object
+
+    def _to_sexpr_raw(self):
+        expr = ["property", ["layer", escape_and_quote(self.layer)]]
+        if self.hatch_position is not None:
+            expr.append(["hatch_position", ["xy", self.hatch_position.X, self.hatch_position.Y]])
+        return expr
+
+
+@dataclass
 class Group:
     """The ``group`` token defines a group of items.
 
